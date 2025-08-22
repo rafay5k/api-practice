@@ -27,6 +27,24 @@
         <div id="message"></div>
     </div>
 
+    <!-- Add Phone Number -->
+    <div class="section">
+        <h3>Add Phone Number</h3>
+        <input type="text" id="phoneUserId" placeholder="User ID">
+        <input type="text" id="phoneNumber" placeholder="Phone Number">
+        <select id="phoneType">
+            <option value="mobile">Mobile</option>
+            <option value="home">Home</option>
+            <option value="work">Work</option>
+            <option value="other">Other</option>
+        </select>
+        <label>
+            <input type="checkbox" id="isPrimary"> Primary Number
+        </label>
+        <button onclick="addPhone()">Add Phone</button>
+        <div id="phoneMessage"></div>
+    </div>
+
     <!-- Show All Users -->
     <div class="section">
         <h3>All Users</h3>
@@ -43,8 +61,9 @@
     </div>
 
     <script>
-        // API URL
+        // API URLs
         const API = 'http://localhost:3000/api/users';
+        const PHONE_API = 'http://localhost:3000/api/phones';
 
         // Add new user
         function addUser() {
@@ -66,7 +85,7 @@
                 contentType: 'application/json'
             })
             .done(function(result) {
-                $('#message').html('<span class="success">User added!</span>');
+                $('#message').html('<span class="success">User added! ID: ' + result.user._id + '</span>');
                 $('#name, #age, #city, #email').val('');
                 showUsers();
             })
@@ -75,9 +94,39 @@
             });
         }
 
+        // Add phone number
+        function addPhone() {
+            const phone = {
+                userId: $('#phoneUserId').val(),
+                phoneNumber: $('#phoneNumber').val(),
+                phoneType: $('#phoneType').val(),
+                isPrimary: $('#isPrimary').is(':checked')
+            };
+
+            if (!phone.userId || !phone.phoneNumber) {
+                $('#phoneMessage').html('<span class="error">Fill User ID and Phone Number!</span>');
+                return;
+            }
+
+            $.post({
+                url: PHONE_API,
+                data: JSON.stringify(phone),
+                contentType: 'application/json'
+            })
+            .done(function(result) {
+                $('#phoneMessage').html('<span class="success">Phone number added!</span>');
+                $('#phoneUserId, #phoneNumber').val('');
+                $('#isPrimary').prop('checked', false);
+                showUsers();
+            })
+            .fail(function() {
+                $('#phoneMessage').html('<span class="error">Error adding phone!</span>');
+            });
+        }
+
         // Show all users
         function showUsers() {
-            $.get(API)
+            $.get(API + '?populate=phoneNumbers')
             .done(function(result) {
                 let html = '';
                 result.users.forEach(function(user) {
@@ -87,9 +136,21 @@
                             <strong>Name:</strong> ${user.name}<br>
                             <strong>Age:</strong> ${user.age}<br>
                             <strong>City:</strong> ${user.city}<br>
-                            <strong>Email:</strong> ${user.email}
-                        </div>
+                            <strong>Email:</strong> ${user.email}<br>
                     `;
+                    
+                    // Add phone numbers if they exist
+                    if (user.phoneNumbers && user.phoneNumbers.length > 0) {
+                        html += '<strong>Phone Numbers:</strong><br>';
+                        user.phoneNumbers.forEach(function(phone) {
+                            const primary = phone.isPrimary ? ' ⭐ PRIMARY' : '';
+                            html += `&nbsp;&nbsp;${phone.phoneType}: ${phone.phoneNumber}${primary}<br>`;
+                        });
+                    } else {
+                        html += '<strong>Phone Numbers:</strong> None<br>';
+                    }
+                    
+                    html += '</div>';
                 });
                 $('#users').html(html);
             })

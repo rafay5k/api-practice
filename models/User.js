@@ -19,7 +19,19 @@ const userSchema = new mongoose.Schema({
     required: true,
     unique: true
   }
+}, {
+  timestamps: true
 });
+
+// Virtual field to get user's phone numbers
+userSchema.virtual('phoneNumbers', {
+  ref: 'Phone',
+  localField: '_id',
+  foreignField: 'userId'
+});
+
+// Include virtual fields when converting to JSON
+userSchema.set('toJSON', { virtuals: true });
 
 // Create and export the model
 const User = mongoose.model('User', userSchema);

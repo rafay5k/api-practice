@@ -28,7 +28,15 @@ const createUser = async (req, res) => {
 // READ - Get all users
 const getAllUsers = async (req, res) => {
   try {
-    const users = await User.find();
+    let users;
+    
+    // Check if populate query parameter is present
+    if (req.query.populate === 'phoneNumbers') {
+      users = await User.find().populate('phoneNumbers');
+    } else {
+      users = await User.find();
+    }
+    
     res.status(200).json({
       message: 'Users retrieved successfully',
       users: users

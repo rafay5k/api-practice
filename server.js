@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const userRoutes = require('./routes/userRoutes');
+const phoneRoutes = require('./routes/phoneRoutes');
 
 const app = express();
 const PORT = 3000;
@@ -17,6 +18,7 @@ mongoose.connect('mongodb://localhost:27017/userdb')
 
 // Routes
 app.use('/api/users', userRoutes);
+app.use('/api/phones', phoneRoutes);
 
 // Basic route
 app.get('/', (req, res) => {
