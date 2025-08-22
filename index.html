@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple User Manager</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; }
+        input, button { padding: 5px; margin: 5px; }
+        button { background: blue; color: white; border: none; cursor: pointer; }
+        .user { background: #f0f0f0; padding: 10px; margin: 5px 0; }
+        .error { color: red; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+    <h1>User Manager</h1>
+
+    <!-- Create User -->
+    <div class="section">
+        <h3>Add New User</h3>
+        <input type="text" id="name" placeholder="Name">
+        <input type="number" id="age" placeholder="Age">
+        <input type="text" id="city" placeholder="City">
+        <input type="email" id="email" placeholder="Email">
+        <button onclick="addUser()">Add User</button>
+        <div id="message"></div>
+    </div>
+
+    <!-- Show All Users -->
+    <div class="section">
+        <h3>All Users</h3>
+        <button onclick="showUsers()">Show Users</button>
+        <div id="users"></div>
+    </div>
+
+    <!-- Delete User -->
+    <div class="section">
+        <h3>Delete User</h3>
+        <input type="text" id="deleteId" placeholder="User ID">
+        <button onclick="deleteUser()">Delete</button>
+        <div id="deleteMsg"></div>
+    </div>
+
+    <script>
+        // API URL
+        const API = 'http://localhost:3000/api/users';
+
+        // Add new user
+        function addUser() {
+            const user = {
+                name: $('#name').val(),
+                age: $('#age').val(),
+                city: $('#city').val(),
+                email: $('#email').val()
+            };
+
+            if (!user.name || !user.age || !user.city || !user.email) {
+                $('#message').html('<span class="error">Fill all fields!</span>');
+                return;
+            }
+
+            $.post({
+                url: API,
+                data: JSON.stringify(user),
+                contentType: 'application/json'
+            })
+            .done(function(result) {
+                $('#message').html('<span class="success">User added!</span>');
+                $('#name, #age, #city, #email').val('');
+                showUsers();
+            })
+            .fail(function() {
+                $('#message').html('<span class="error">Error adding user!</span>');
+            });
+        }
+
+        // Show all users
+        function showUsers() {
+            $.get(API)
+            .done(function(result) {
+                let html = '';
+                result.users.forEach(function(user) {
+                    html += `
+                        <div class="user">
+                            <strong>ID:</strong> ${user._id}<br>
+                            <strong>Name:</strong> ${user.name}<br>
+                            <strong>Age:</strong> ${user.age}<br>
+                            <strong>City:</strong> ${user.city}<br>
+                            <strong>Email:</strong> ${user.email}
+                        </div>
+                    `;
+                });
+                $('#users').html(html);
+            })
+            .fail(function() {
+                $('#users').html('<span class="error">Error loading users!</span>');
+            });
+        }
+
+        // Delete user
+        function deleteUser() {
+            const id = $('#deleteId').val();
+            
+            if (!id) {
+                $('#deleteMsg').html('<span class="error">Enter User ID!</span>');
+                return;
+            }
+
+            $.ajax({
+                url: API + '/' + id,
+                method: 'DELETE'
+            })
+            .done(function() {
+                $('#deleteMsg').html('<span class="success">User deleted!</span>');
+                $('#deleteId').val('');
+                showUsers();
+            })
+            .fail(function() {
+                $('#deleteMsg').html('<span class="error">Error deleting user!</span>');
+            });
+        }
+
+        // Load users when page opens
+        $(document).ready(function() {
+            showUsers();
+        });
+    </script>
+</body>
+</html>
